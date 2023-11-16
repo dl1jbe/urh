@@ -39,7 +39,15 @@ class Signal(QObject):
     protocol_needs_update = pyqtSignal()
     data_edited = pyqtSignal()  # On Crop/Mute/Delete etc.
 
-    def __init__(self, filename: str, name="Signal", modulation: str = None, sample_rate: float = 1e6, parent=None):
+    def __init__(
+        self,
+        filename: str,
+        name="Signal",
+        modulation: str = None,
+        sample_rate: float = 1e6,
+        timestamp: float = 0,
+        parent=None,
+    ):
         super().__init__(parent)
         self.__name = name
         self.__tolerance = 5
@@ -51,6 +59,7 @@ class Signal(QObject):
         self.__center = 0
         self._noise_threshold = 0
         self.__sample_rate = sample_rate
+        self.__timestamp = timestamp
         self.noise_min_plot = 0
         self.noise_max_plot = 0
         self.block_protocol_update = False
@@ -180,6 +189,14 @@ class Signal(QObject):
         if val != self.sample_rate:
             self.__sample_rate = val
             self.sample_rate_changed.emit(val)
+
+    @property
+    def timestamp(self):
+        return self.__timestamp
+
+    @timestamp.setter
+    def timestamp(self, val):
+        self.__timestamp = val
 
     @property
     def parameter_cache(self) -> dict:
@@ -438,13 +455,15 @@ class Signal(QObject):
             logger.warning("Could not calculate noise threshold for range {}-{}".format(noise_start, noise_end))
             return self.noise_threshold_relative
 
-    def create_new(self, start=0, end=0, new_data=None):
+    def create_new(self, start=0, end=0, new_data=None, new_timestamp=0):
         new_signal = Signal("", "New " + self.name)
 
         if new_data is None:
             new_signal.iq_array = IQArray(self.iq_array[start:end])
+            new_signal.__timestamp = self.timestamp + (start / self.sample_rate)
         else:
             new_signal.iq_array = IQArray(new_data)
+            new_signal.__timestamp = new_timestamp
 
         new_signal._noise_threshold = self.noise_threshold
         new_signal.noise_min_plot = self.noise_min_plot
