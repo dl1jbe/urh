@@ -107,7 +107,7 @@ def read_long_description():
         return ""
 
 
-install_requires = ["numpy", "psutil", "cython<3.0.0"]
+install_requires = ["numpy", "psutil", "cython"]
 if IS_RELEASE:
     install_requires.append("PyQt6")
 else:
